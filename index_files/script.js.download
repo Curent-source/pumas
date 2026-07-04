@@ -1,0 +1,388 @@
+var _____WB$wombat$assign$function_____=function(name){return (globalThis._wb_wombat && globalThis._wb_wombat.local_init && globalThis._wb_wombat.local_init(name))||globalThis[name];};if(!globalThis.__WB_pmw){globalThis.__WB_pmw=function(obj){this.__WB_source=obj;return this;}}{
+let window = _____WB$wombat$assign$function_____("window");
+let self = _____WB$wombat$assign$function_____("self");
+let document = _____WB$wombat$assign$function_____("document");
+let location = _____WB$wombat$assign$function_____("location");
+let top = _____WB$wombat$assign$function_____("top");
+let parent = _____WB$wombat$assign$function_____("parent");
+let frames = _____WB$wombat$assign$function_____("frames");
+let opener = _____WB$wombat$assign$function_____("opener");
+/**
+ * MindReef Website - JavaScript
+ * Handles animations, interactions, and dynamic behavior
+ */
+
+(function() {
+    'use strict';
+
+    // ==========================================
+    // Navigation
+    // ==========================================
+
+    const nav = document.getElementById('nav');
+    const mobileToggle = document.getElementById('mobile-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    // Scroll-based nav styling
+    let lastScrollY = 0;
+    let ticking = false;
+
+    function updateNav() {
+        const scrollY = window.scrollY;
+
+        if (scrollY > 50) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+
+        lastScrollY = scrollY;
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            window.requestAnimationFrame(updateNav);
+            ticking = true;
+        }
+    });
+
+    // Mobile menu toggle
+    if (mobileToggle && mobileMenu) {
+        mobileToggle.addEventListener('click', function() {
+            mobileToggle.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+            document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+        });
+
+        // Close mobile menu on link click
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(function(link) {
+            link.addEventListener('click', function() {
+                mobileToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+    }
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+        anchor.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            if (href === '#') return;
+
+            const target = document.querySelector(href);
+            if (target) {
+                e.preventDefault();
+                const navHeight = nav.offsetHeight;
+                const targetPosition = target.getBoundingClientRect().top + window.scrollY - navHeight - 20;
+
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // ==========================================
+    // Scroll Animations
+    // ==========================================
+
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px 0px -10% 0px',
+        threshold: 0.1
+    };
+
+    const animateOnScroll = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                // Optionally unobserve after animation
+                // animateOnScroll.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.animate-on-scroll').forEach(function(el) {
+        animateOnScroll.observe(el);
+    });
+
+    // Stagger animations for grid items
+    document.querySelectorAll('.features-grid, .pricing-grid, .testimonials-grid').forEach(function(grid) {
+        const items = grid.querySelectorAll('.animate-on-scroll');
+        items.forEach(function(item, index) {
+            item.style.transitionDelay = (index * 0.1) + 's';
+        });
+    });
+
+    // ==========================================
+    // Hero Animation Enhancement
+    // ==========================================
+
+    // Parallax effect on hero
+    const heroContent = document.querySelector('.hero-content');
+    const heroVisualization = document.querySelector('.hero-visualization');
+
+    if (heroContent && heroVisualization) {
+        window.addEventListener('scroll', function() {
+            const scrollY = window.scrollY;
+            const maxScroll = window.innerHeight;
+
+            if (scrollY < maxScroll) {
+                const progress = scrollY / maxScroll;
+                heroContent.style.opacity = 1 - (progress * 0.5);
+                heroContent.style.transform = `translateY(${scrollY * 0.2}px)`;
+                heroVisualization.style.opacity = 0.6 - (progress * 0.4);
+            }
+        });
+    }
+
+    // ==========================================
+    // Mouse Glow Effect
+    // ==========================================
+
+    document.querySelectorAll('.feature-card').forEach(function(card) {
+        card.addEventListener('mousemove', function(e) {
+            const rect = card.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            card.style.setProperty('--mouse-x', x + '%');
+            card.style.setProperty('--mouse-y', y + '%');
+        });
+    });
+
+    // ==========================================
+    // Number Counter Animation
+    // ==========================================
+
+    function animateCounter(el, target, duration) {
+        const start = 0;
+        const startTime = performance.now();
+
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Easing function (ease-out)
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const current = Math.floor(start + (target - start) * easeOut);
+
+            el.textContent = current.toLocaleString();
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            } else {
+                el.textContent = target.toLocaleString();
+            }
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    // Observe stats and animate when visible
+    const statsObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                const value = entry.target.textContent;
+                // Handle different formats (10M+, 99.9%, <50ms)
+                // For now, just add the visible class
+                entry.target.classList.add('visible');
+                statsObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.hero-stat-value').forEach(function(stat) {
+        statsObserver.observe(stat);
+    });
+
+    // ==========================================
+    // Code Block Copy
+    // ==========================================
+
+    document.querySelectorAll('.code-block').forEach(function(block) {
+        // Create copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'code-copy-btn';
+        copyBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+        `;
+
+        copyBtn.style.cssText = `
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 4px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s ease;
+        `;
+
+        const header = block.querySelector('.code-header');
+        if (header) {
+            header.style.position = 'relative';
+            header.appendChild(copyBtn);
+
+            block.addEventListener('mouseenter', function() {
+                copyBtn.style.opacity = '1';
+            });
+
+            block.addEventListener('mouseleave', function() {
+                copyBtn.style.opacity = '0';
+            });
+
+            copyBtn.addEventListener('click', function() {
+                const code = block.querySelector('code');
+                if (code) {
+                    navigator.clipboard.writeText(code.textContent).then(function() {
+                        copyBtn.innerHTML = `
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        `;
+                        setTimeout(function() {
+                            copyBtn.innerHTML = `
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            `;
+                        }, 2000);
+                    });
+                }
+            });
+        }
+    });
+
+    // ==========================================
+    // Newsletter Form
+    // ==========================================
+
+    const newsletterForm = document.querySelector('.newsletter-form');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = this.querySelector('input');
+            const button = this.querySelector('button');
+
+            if (input.value) {
+                const originalText = button.textContent;
+                button.textContent = 'Subscribed!';
+                button.disabled = true;
+                input.value = '';
+
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 3000);
+            }
+        });
+    }
+
+    // ==========================================
+    // Pricing Card Hover Effects
+    // ==========================================
+
+    document.querySelectorAll('.pricing-card').forEach(function(card) {
+        card.addEventListener('mouseenter', function() {
+            // Add subtle scale to siblings
+            const siblings = Array.from(card.parentElement.children).filter(function(el) {
+                return el !== card;
+            });
+            siblings.forEach(function(sibling) {
+                sibling.style.transform = 'scale(0.98)';
+                sibling.style.opacity = '0.7';
+            });
+        });
+
+        card.addEventListener('mouseleave', function() {
+            const siblings = Array.from(card.parentElement.children);
+            siblings.forEach(function(sibling) {
+                sibling.style.transform = '';
+                sibling.style.opacity = '';
+            });
+        });
+    });
+
+    // ==========================================
+    // Keyboard Navigation
+    // ==========================================
+
+    // Command palette hint (visual only for now)
+    document.addEventListener('keydown', function(e) {
+        // Cmd/Ctrl + K
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            // Would open command palette in full implementation
+            console.log('Command palette would open here');
+        }
+
+        // Escape to close mobile menu
+        if (e.key === 'Escape' && mobileMenu && mobileMenu.classList.contains('active')) {
+            mobileToggle.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+
+    // ==========================================
+    // Performance: Reduce Motion
+    // ==========================================
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    if (prefersReducedMotion.matches) {
+        // Disable animations for users who prefer reduced motion
+        document.documentElement.style.setProperty('--transition-fast', '0ms');
+        document.documentElement.style.setProperty('--transition-base', '0ms');
+        document.documentElement.style.setProperty('--transition-slow', '0ms');
+
+        // Make all animate-on-scroll elements visible immediately
+        document.querySelectorAll('.animate-on-scroll').forEach(function(el) {
+            el.classList.add('visible');
+        });
+    }
+
+    // ==========================================
+    // Initialize on DOM Ready
+    // ==========================================
+
+    // Initial nav state
+    updateNav();
+
+    // Log load time for performance monitoring
+    window.addEventListener('load', function() {
+        const loadTime = performance.now();
+        console.log(`MindReef loaded in ${loadTime.toFixed(0)}ms`);
+    });
+
+})();
+
+}
+
+/*
+     FILE ARCHIVED ON 12:36:47 Jan 09, 2026 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 21:46:29 Jul 04, 2026.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+*/
+/*
+playback timings (ms):
+  capture_cache.get: 11.757
+  load_resource: 190.654
+  PetaboxLoader3.resolve: 97.542
+  PetaboxLoader3.datanode: 66.685
+*/
